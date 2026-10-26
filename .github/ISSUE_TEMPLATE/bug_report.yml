@@ -1,0 +1,100 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! CrewSwap is a beta, so reports like this are exactly what it needs.
+
+        Before you start: check [Troubleshooting](https://mrmcepic.github.io/barotrauma-crewswap/book/guide/troubleshooting.html) and the [FAQ](https://mrmcepic.github.io/barotrauma-crewswap/book/guide/faq.html). **Security problems go through a [private report](https://github.com/MrMcEpic/barotrauma-crewswap/security/advisories/new), not an issue.**
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What went wrong, and what did you expect to happen instead?
+      placeholder: |
+        I clicked the medic's row in the crew list and nothing happened. I expected to take control of the medic.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: How can someone else trigger this? Include the number of players and what each was doing.
+      placeholder: |
+        1. Two players in a campaign, pool mode `shared`, protect on
+        2. Player A switches into the engineer
+        3. Player B clicks the engineer's row
+        4. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: side
+    attributes:
+      label: Where did it happen?
+      options:
+        - Server (dedicated)
+        - Server (hosted from a game client)
+        - Client
+        - Both / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: build
+    attributes:
+      label: CrewSwap build line
+      description: Copy the line from the server console (and the client's F3 console if it's a client problem).
+      placeholder: "[CrewSwap] server loaded build 0.9.0-beta"
+    validations:
+      required: true
+
+  - type: input
+    id: game-version
+    attributes:
+      label: Barotrauma version
+      description: Shown in the main menu and at the top of the server log.
+      placeholder: "1.13.4.x"
+    validations:
+      required: true
+
+  - type: input
+    id: luacs-version
+    attributes:
+      label: Lua for Barotrauma (LuaCs) version
+      description: The LuaCs version or commit, on the server and on the affected client if different. (LuaCs prints its version in the console when it loads.)
+      placeholder: "commit 85ded59"
+    validations:
+      required: true
+
+  - type: input
+    id: mode
+    attributes:
+      label: Campaign settings
+      description: Respawn mode (MidRound, BetweenRounds, None, Permadeath), and CrewSwap's pool and protect settings (`!crewswap status` shows them).
+      placeholder: "MidRound, pool shared, protect on"
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        All `[CrewSwap]` lines from the server console, and from the client's F3 console for client problems. More context around the error is better than less.
+        **Remove anything private** (IP addresses, SteamIDs, passwords) before posting.
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: other-mods
+    attributes:
+      label: Other mods
+      description: Any other mods enabled on the server, in load order.
+    validations:
+      required: false

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="CrewSwap is a Lua mod for Barotrauma that lets players in a multiplayer campaign take control of any free bot crew member by clicking their row in the crew list, the way singleplayer does.">
+<meta property="og:title" content="CrewSwap">
+<meta property="og:description" content="Switch between your crew in Barotrauma multiplayer campaigns, singleplayer-style.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mrmcepic.github.io/barotrauma-crewswap/">
+<meta property="og:image" content="https://mrmcepic.github.io/barotrauma-crewswap/preview.png">
+<meta name="theme-color" content="#071a2b">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<title>CrewSwap — switch between your crew in Barotrauma multiplayer</title>
+<style>
+:root {
+    --bg: #eef4f8;
+    --bg-deep: #dce8f0;
+    --bg-elevated: #ffffff;
+    --bg-code: #e4edf3;
+    --border: #c6d6e2;
+    --fg: #1d3346;
+    --fg-dim: #4e6779;
+    --fg-bright: #0a1c2c;
+    --accent: #0f8f80;
+    --accent-hover: #0b7569;
+    --accent-ink: #ffffff;
+    --accent-soft: rgba(15, 143, 128, 0.12);
+    --beta: #b7791f;
+    --beta-ink: #ffffff;
+    --row: #ffffff;
+    --row-taken: #e6edf2;
+    --hero-glow: rgba(15, 143, 128, 0.16);
+    --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", sans-serif;
+    --mono: "SF Mono", Monaco, Menlo, "Cascadia Code", Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #071a2b;
+        --bg-deep: #04111d;
+        --bg-elevated: #0c2438;
+        --bg-code: #0a1f31;
+        --border: #1a3a54;
+        --fg: #c9dae6;
+        --fg-dim: #8aa5b8;
+        --fg-bright: #f0f6fa;
+        --accent: #4fd6c3;
+        --accent-hover: #7ae3d5;
+        --accent-ink: #04111d;
+        --accent-soft: rgba(79, 214, 195, 0.12);
+        --beta: #e0a43a;
+        --beta-ink: #1b1204;
+        --row: #0f2c44;
+        --row-taken: #0a1f31;
+        --hero-glow: rgba(79, 214, 195, 0.10);
+    }
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+}
+
+.wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+/* ---------- hero ---------- */
+
+header.hero {
+    position: relative;
+    padding: 88px 0 72px;
+    border-bottom: 1px solid var(--border);
+    background:
+        radial-gradient(ellipse 70% 60% at 50% 0%, var(--hero-glow), transparent 70%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+}
+
+.hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 48px;
+    align-items: center;
+}
+
+.badge {
+    display: inline-block;
+    background: var(--beta);
+    color: var(--beta-ink);
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+    border-radius: 6px;
+    vertical-align: middle;
+}
+
+.eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin: 0 0 18px;
+    color: var(--fg-dim);
+    font-size: 0.9rem;
+}
+
+.hero h1 {
+    font-size: clamp(2.5rem, 7vw, 4rem);
+    line-height: 1.05;
+    margin: 0 0 18px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--fg-bright);
+}
+
+.hero .tagline {
+    font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+    color: var(--fg-dim);
+    margin: 0 0 32px;
+    max-width: 560px;
+}
+
+.cta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: 1px solid transparent;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn:hover { text-decoration: none; }
+
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: var(--accent-hover); }
+
+.btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--fg-bright);
+    border-color: var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent); }
+
+.btn-disabled {
+    background: transparent;
+    color: var(--fg-dim);
+    border: 1px dashed var(--border);
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.hero-art {
+    justify-self: center;
+    width: 100%;
+    max-width: 340px;
+}
+
+.hero-art img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 60px -24px rgba(4, 17, 29, 0.55);
+}
+
+.beta-note {
+    margin: 28px 0 0;
+    padding: 14px 16px;
+    border-left: 3px solid var(--beta);
+    background: var(--bg-elevated);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    color: var(--fg);
+    font-size: 0.93rem;
+    max-width: 600px;
+}
+
+/* ---------- sections ---------- */
+
+section {
+    padding: 72px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+section h2 {
+    font-size: clamp(1.5rem, 3.5vw, 2rem);
+    margin: 0 0 12px;
+    color: var(--fg-bright);
+    letter-spacing: -0.01em;
+    font-weight: 750;
+}
+
+section .lead {
+    color: var(--fg-dim);
+    margin: 0 0 40px;
+    max-width: 660px;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 18px;
+}
+
+.feature {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    transition: border-color 0.15s ease;
+}
+
+.feature:hover { border-color: var(--accent); }
+
+.feature h3 {
+    margin: 0 0 8px;
+    color: var(--fg-bright);
+    font-size: 1.08rem;
+    font-weight: 700;
+}
+
+.feature p {
+    margin: 0;
+    color: var(--fg-dim);
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+/* ---------- how it works ---------- */
+
+.how {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 40px;
+    align-items: start;
+}
+
+.steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: step;
+}
+
+.steps li {
+    counter-increment: step;
+    position: relative;
+    padding: 0 0 22px 48px;
+}
+
+.steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    font-size: 0.95rem;
+}
+
+.steps strong { color: var(--fg-bright); }
+
+.crew-panel {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    font-size: 0.92rem;
+}
+
+.crew-panel .panel-title {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    margin: 2px 4px 10px;
+    font-weight: 700;
+}
+
+.crew-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--row);
+    border: 1px solid var(--border);
+    margin-top: 8px;
+    min-width: 0;
+}
+
+.crew-row .dot {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--fg-dim);
+    opacity: 0.5;
+}
+
+.crew-row .name { font-weight: 650; color: var(--fg-bright); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crew-row .role { color: var(--fg-dim); font-size: 0.85rem; }
+.crew-row .meta { margin-left: auto; font-size: 0.8rem; color: var(--fg-dim); white-space: nowrap; }
+
+.crew-row.you { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.crew-row.you .dot { background: var(--accent); opacity: 1; }
+.crew-row.you .meta { color: var(--accent); font-weight: 700; }
+
+.crew-row.taken { background: var(--row-taken); opacity: 0.6; }
+
+.crew-row.free { cursor: pointer; }
+.crew-row.free:hover { border-color: var(--accent); }
+
+/* ---------- requirements ---------- */
+
+.req-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 18px;
+}
+
+.req {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+}
+
+.req .label {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+
+.req .value {
+    color: var(--fg-bright);
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin: 0 0 8px;
+}
+
+.req p { margin: 0; color: var(--fg-dim); font-size: 0.93rem; }
+
+/* ---------- AI note ---------- */
+
+.note {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    max-width: 760px;
+}
+
+.note p { margin: 0 0 12px; }
+.note p:last-child { margin-bottom: 0; color: var(--fg-dim); }
+
+footer {
+    padding: 48px 0;
+    text-align: center;
+    color: var(--fg-dim);
+    font-size: 0.9rem;
+    background: var(--bg-deep);
+}
+
+footer p { margin: 6px 0; }
+footer a { color: var(--fg-dim); text-decoration: underline; text-underline-offset: 2px; }
+footer a:hover { color: var(--fg-bright); }
+
+@media (max-width: 820px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 36px; }
+    .hero-art { max-width: 260px; justify-self: start; }
+    .how { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 600px) {
+    .wrap { padding: 0 16px; }
+    header.hero { padding: 56px 0 48px; }
+    section { padding: 52px 0; }
+    .cta .btn { flex: 1 1 100%; justify-content: center; }
+    .note { padding: 20px; }
+    .crew-row .role { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="wrap hero-grid">
+        <div>
+            <p class="eyebrow"><span class="badge">BETA</span> <span>Version 0.9.0 &middot; Lua mod for Barotrauma</span></p>
+            <h1>CrewSwap</h1>
+            <p class="tagline">Switch between your crew in Barotrauma multiplayer campaigns, the way you can in singleplayer. Click a free crew member's row in the crew list and you're driving them; the body you left goes back to being a working bot.</p>
+            <div class="cta">
+                <a class="btn btn-primary" href="./book/">Read the docs</a>
+                <a class="btn btn-secondary" href="https://github.com/MrMcEpic/barotrauma-crewswap/releases/latest">Download latest release</a>
+                <a class="btn btn-secondary" href="https://github.com/MrMcEpic/barotrauma-crewswap">View on GitHub</a>
+                <span class="btn btn-disabled" aria-disabled="true" title="The Steam Workshop item isn't published yet">Steam Workshop &middot; coming soon</span>
+            </div>
+            <p class="beta-note"><strong>This is a beta.</strong> The server-side logic is covered by unit tests and an automated 18-scenario run on a real dedicated server, but live switching between two or more human players hasn't been fully play-tested yet. Keep backups of campaigns you care about, and please <a href="https://github.com/MrMcEpic/barotrauma-crewswap/issues">report</a> anything odd.</p>
+        </div>
+        <div class="hero-art">
+            <img src="preview.png" width="640" height="640" alt="CrewSwap logo: two crew silhouettes with arrows swapping between them, and a BETA badge">
+        </div>
+    </div>
+</header>
+
+<main>
+
+<section id="features">
+    <div class="wrap">
+        <h2>Features</h2>
+        <p class="lead">Everything CrewSwap changes while it's active. Admins pick the rules in game; the rest just works.</p>
+        <div class="feature-grid">
+
+            <article class="feature">
+                <h3>Click to switch</h3>
+                <p>Click a crew member's row in the crew list to take control. Rows someone else is playing are greyed out and labelled with that player's name. Dragging rows and order buttons work as usual.</p>
+            </article>
+
+            <article class="feature">
+                <h3>Shared pool or own crew</h3>
+                <p>In <code>shared</code> mode anyone can take any free crew member. In <code>own</code> mode you can take your own character, crew you own (hired in own mode, claimed by playing them first, or assigned by an admin) and crew nobody has claimed yet.</p>
+            </article>
+
+            <article class="feature">
+                <h3>Home protection</h3>
+                <p>On by default: your own character stays yours. While you're off playing someone else, nobody else can take your home character.</p>
+            </article>
+
+            <article class="feature">
+                <h3>Keep playing after death</h3>
+                <p>When the character you're driving dies, jump straight into another free crew member instead of spectating. If every player is down but free crew remain, the round is held open for up to two minutes.</p>
+            </article>
+
+            <article class="feature">
+                <h3>Per-character wallets</h3>
+                <p>Money belongs to the character, not the player. Bots keep their own wallets and salary, and round-end pay goes to the character you were driving.</p>
+            </article>
+
+            <article class="feature">
+                <h3>Safety first</h3>
+                <p>Version checks on start-up, a patch-install audit, always-on start-up checks, an end-of-round integrity check that refuses to write a broken save, a lockdown mode and 20 kept campaign backups.</p>
+            </article>
+
+            <article class="feature">
+                <h3>Dead crew come back</h3>
+                <p>Outside Permadeath, crew who aren't anyone's own character return as bots next round instead of being deleted, with vanilla's death penalty after a saved round.</p>
+            </article>
+
+            <article class="feature">
+                <h3>Pure Lua, no C#</h3>
+                <p>The package ships no C#, so nobody gets a "this mod wants to run code" prompt. Players without client-side Lua can still join and play; they just can't switch.</p>
+            </article>
+
+        </div>
+    </div>
+</section>
+
+<section id="how-it-works">
+    <div class="wrap">
+        <h2>How it works</h2>
+        <p class="lead">No new menus to learn. CrewSwap uses the crew list you already have.</p>
+        <div class="how">
+            <ol class="steps">
+                <li><strong>Open the crew list</strong> during a multiplayer campaign round. Every crew member has a row, as usual.</li>
+                <li><strong>Click a free crew member's row.</strong> The server checks the rules (pool mode, home protection, whether someone else already has them) and hands you control.</li>
+                <li><strong>The body you left becomes a bot again</strong> and picks its orders back up. Rows other players are driving are greyed out with their name on them.</li>
+                <li><strong>Switch whenever you like</strong> (there's a 3-second cooldown). Hop into the medic when someone needs patching up, then back to your own character when you're done.</li>
+            </ol>
+            <div class="crew-panel" role="img" aria-label="Illustration of the crew list with CrewSwap">
+                <p class="panel-title">Crew</p>
+                <div class="crew-row you"><span class="dot"></span><span class="name">Captain</span><span class="role">Command</span><span class="meta">You</span></div>
+                <div class="crew-row taken"><span class="dot"></span><span class="name">Engineer</span><span class="role">Engineering</span><span class="meta">Played by a friend</span></div>
+                <div class="crew-row free"><span class="dot"></span><span class="name">Medic</span><span class="role">Medical</span><span class="meta">Free &middot; click to take</span></div>
+                <div class="crew-row free"><span class="dot"></span><span class="name">Security officer</span><span class="role">Security</span><span class="meta">Free &middot; click to take</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="requirements">
+    <div class="wrap">
+        <h2>Requirements</h2>
+        <p class="lead">CrewSwap patches the campaign's save code, so it checks versions carefully when the server starts. Full details are on the <a href="./book/guide/requirements.html">Requirements</a> page.</p>
+        <div class="req-grid">
+            <div class="req">
+                <p class="label">Game</p>
+                <p class="value">Barotrauma 1.13.4.x</p>
+                <p>On any other game version CrewSwap turns itself off and the campaign carries on as plain vanilla.</p>
+            </div>
+            <div class="req">
+                <p class="label">Server</p>
+                <p class="value">Lua for Barotrauma, server-side</p>
+                <p><a href="https://steamcommunity.com/sharedfiles/filedetails/?id=2559634234">Workshop item 2559634234</a>, with its C# run policy left at the default so server Lua is unsandboxed. Built against LuaCs commit <code>85ded59</code>; on another LuaCs build CrewSwap logs a warning and carries on, guarded by its patch-install audit and runtime checks.</p>
+            </div>
+            <div class="req">
+                <p class="label">Every player who switches</p>
+                <p class="value">Lua for Barotrauma, client-side</p>
+                <p>CrewSwap itself downloads from the server when you join. Players without client-side Lua can still play; they just can't switch.</p>
+            </div>
+            <div class="req">
+                <p class="label">Game mode</p>
+                <p class="value">Multiplayer campaign</p>
+                <p>MidRound, BetweenRounds, None and Permadeath respawn modes. CrewSwap stays off under Ironman and outside campaigns.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="how-it-was-made">
+    <div class="wrap">
+        <h2>A note on how this was made</h2>
+        <div class="note">
+            <p>CrewSwap was built with AI assistance (Claude), under the direction and review of a real software engineer. It started as a mod for personal use with friends, and it's shared here in case others enjoy it too.</p>
+            <p>If you're not comfortable with AI-assisted mods, no hard feelings at all. You don't have to use it.</p>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<footer>
+    <div class="wrap">
+        <p>
+            <a href="./book/">Documentation</a> &middot;
+            <a href="https://github.com/MrMcEpic/barotrauma-crewswap">GitHub</a> &middot;
+            <a href="https://github.com/MrMcEpic/barotrauma-crewswap/releases">Releases</a> &middot;
+            <a href="https://github.com/MrMcEpic/barotrauma-crewswap/blob/main/LICENSE">AGPL-3.0</a>
+        </p>
+        <p>Built by <a href="https://github.com/MrMcEpic">MrMcEpic</a> and contributors. CrewSwap is a fan-made mod and is not affiliated with the developers or publishers of Barotrauma.</p>
+    </div>
+</footer>
+
+</body>
+</html>

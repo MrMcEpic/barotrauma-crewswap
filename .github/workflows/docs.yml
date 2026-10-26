@@ -1,0 +1,95 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    # Only run when something that contributes to the rendered site changes.
+    paths:
+      - 'docs/**'
+      - 'book.toml'
+      - 'theme/**'
+      - 'landing/**'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'book.toml'
+      - 'theme/**'
+      - 'landing/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Per-ref group. Superseded pull-request builds are cancelled; runs on main queue instead,
+  # so a newer push never cancels a deploy that is already in progress.
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  MDBOOK_VERSION: 0.5.4
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install mdBook
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -sSfL "https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz -C "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Build the book
+        run: |
+          set -o pipefail
+          mdbook --version
+          # Treat any mdBook warning (broken link, missing file, unknown key) as a failure.
+          mdbook build 2>&1 | tee mdbook.log
+          if grep -q 'WARN' mdbook.log; then
+            echo "::error::mdBook reported warnings"
+            exit 1
+          fi
+      - name: Assemble Pages site (landing + book)
+        run: |
+          rm -rf _site
+          mkdir -p _site
+          cp -R landing/. _site/
+          cp -R book _site/book
+          # Pages serves a custom 404 only from the site root; mdBook's 404 page has an absolute
+          # <base href> (site-url), so it works from there too.
+          cp book/404.html _site/404.html
+          touch _site/.nojekyll
+          test -f _site/index.html
+          test -f _site/book/index.html
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./_site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    # Only the deploy job needs to write to Pages and mint the OIDC token.
+    permissions:
+      pages: write
+      id-token: write
+    # GitHub Pages permits one in-flight deploy per repo. Queue (don't cancel) so a deploy
+    # is never killed mid-upload.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5

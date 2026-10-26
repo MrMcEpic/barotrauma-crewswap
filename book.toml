@@ -1,0 +1,39 @@
+[book]
+title = "CrewSwap"
+description = "Switch between your crew in Barotrauma multiplayer campaigns: player guide, admin guide and architecture notes."
+authors = ["MrMcEpic"]
+language = "en"
+src = "docs"
+
+[build]
+# Built into ./book (gitignored). The Docs workflow copies it to /book/ on GitHub Pages,
+# next to the landing page at the site root.
+build-dir = "book"
+# Fail the build instead of silently creating empty pages for missing SUMMARY entries.
+create-missing = false
+
+[output.html]
+git-repository-url = "https://github.com/MrMcEpic/barotrauma-crewswap"
+edit-url-template = "https://github.com/MrMcEpic/barotrauma-crewswap/edit/main/{path}"
+site-url = "/barotrauma-crewswap/book/"
+default-theme = "ayu"
+preferred-dark-theme = "ayu"
+additional-css = ["theme/custom.css"]
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+limit-results = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1
+expand = true
+heading-split-level = 3
+
+[output.html.playground]
+editable = false
+runnable = false

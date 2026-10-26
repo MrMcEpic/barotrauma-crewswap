@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    # Skip CI on changes that can't break the mod, the tests or the package: prose, the
+    # licence, templates and the docs site. The Docs workflow still runs on docs changes so
+    # the Pages site rebuilds. Use `[skip ci]` in a commit subject for any other one-off case.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'landing/**'
+      - 'theme/**'
+      - 'book.toml'
+      - 'workshop/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lua unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Lua 5.2
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lua5.2
+      - name: Run tests
+        run: |
+          set -o pipefail
+          lua5.2 tests/run.lua | tee test-output.txt
+          # Guard against a runner that found no test files at all.
+          tail -n 1 test-output.txt | grep -Eq '^[1-9][0-9]* passed, 0 failed$'
+
+  package:
+    name: Package smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build a throwaway package
+        id: pkg
+        run: |
+          zip_path="$(tools/package.sh 0.0.0 ci-1)"
+          echo "zip=$zip_path" >> "$GITHUB_OUTPUT"
+      - name: Check the zip
+        env:
+          ZIP: ${{ steps.pkg.outputs.zip }}
+        run: |
+          set -o pipefail
+          test "$(basename "$ZIP")" = "CrewSwap-0.0.0.zip"
+          unzip -l "$ZIP"
+          # Exactly one top-level folder, CrewSwap/.
+          test "$(unzip -Z1 "$ZIP" | cut -d/ -f1 | sort -u)" = "CrewSwap"
+          unzip -Z1 "$ZIP" | grep -qx 'CrewSwap/filelist.xml'
+          unzip -Z1 "$ZIP" | grep -qx 'CrewSwap/Lua/crewswap/shared/build.lua'
+          # Version stamps landed in the staged copy...
+          unzip -p "$ZIP" CrewSwap/Lua/crewswap/shared/build.lua | grep -q "BUILD = '0.0.0-ci-1'"
+          unzip -p "$ZIP" CrewSwap/Lua/crewswap/shared/build.lua | grep -q "MODVERSION = '0.0.0'"
+          unzip -p "$ZIP" CrewSwap/filelist.xml | grep -q 'modversion="0.0.0"'
+          # ...and not in the working tree.
+          git diff --exit-code -- mod/
+
+  xml:
+    name: Validate mod XML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install xmllint
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils
+      - name: Check every XML file is well-formed
+        run: find mod -name '*.xml' -print0 | xargs -0 --no-run-if-empty xmllint --noout

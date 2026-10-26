@@ -1,0 +1,58 @@
+[h1]CrewSwap: switch between your crew in multiplayer[/h1]
+
+Take control of any free bot crew member in a [b]multiplayer campaign[/b] by clicking their row in the crew list, just like crew switching in singleplayer. Hop into the medic when someone needs patching up, hand a bot back when you're done, or jump into another crew member when your character goes down.
+
+[h2]BETA[/h2]
+[b]Version 0.9.0 is a beta.[/b] All of the server-side logic is covered by unit tests and passed an 18-scenario automated test run on a real dedicated server, but live switching with two or more human players has [b]not[/b] been fully play-tested yet. Expect rough edges, keep backups of campaigns you care about, and please report anything odd on GitHub.
+
+[h2]A note on how this was made[/h2]
+CrewSwap was built with AI assistance (Claude), under the direction and review of a real software engineer. It started as a mod for personal use with friends and is shared in case others enjoy it too. If you're not comfortable using AI-assisted mods, no hard feelings at all; you don't have to use it.
+
+[h2]Requirements[/h2]
+[list]
+[*][b]Barotrauma 1.13.4.x[/b]
+[*][b]The server[/b] needs [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2559634234]Lua for Barotrauma[/url] installed server-side, plus CrewSwap. CrewSwap was tested against [b]LuaCs build 85ded59[/b]: on any other build it logs a warning in the server console and keeps going (its patch-install audit and runtime checks still switch it off if something breaks). Leave LuaCs's C# run policy at its default (CrewSwap's server half needs unsandboxed server Lua; it ships no C#). See the [url=https://mrmcepic.github.io/barotrauma-crewswap/book/guide/requirements.html]Requirements page[/url].
+[*][b]Every player[/b] needs [b]client-side[/b] Lua for Barotrauma. Install it as described on the [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2559634234]Lua for Barotrauma Workshop page[/url], and keep the Lua for Barotrauma Workshop package itself [b]disabled[/b] in your mod list, as that page explains.
+[*]Players without client-side Lua can still join and play normally; they just can't switch, and CrewSwap tells them so in chat.
+[/list]
+
+[h2]Features[/h2]
+[list]
+[*][b]Click to switch.[/b] Click a crew member's row in the crew list to take control of them. Rows someone else is playing are greyed out and labelled with their name. Dragging rows and the order buttons work as usual.
+[*][b]Shared pool or own crew.[/b] In shared mode any free crew member can be taken; in own mode you can take your own character, crew you own (hired in own mode, claimed by playing them first, or assigned by an admin) and crew nobody has claimed yet.
+[*][b]Home protection[/b] (on by default). While you play someone else, other players can't take your own character.
+[*][b]Keep playing after death.[/b] Pick another free crew member from the crew list instead of spectating.
+[*][b]Per-character wallets.[/b] Money belongs to the character; round-end pay goes to the character you were driving (on save-and-quit it goes to each player's own character).
+[*][b]Dead crew come back.[/b] Outside Permadeath, crew members who aren't anyone's own character are no longer deleted when they die; they come back as bots next round.
+[*][b]Safety first.[/b] Version check on start-up (the mod switches itself off on a game version it wasn't built for, and warns on a different LuaCs build), a patch-install audit, an end-of-round integrity check that refuses to write a broken save, a lockdown mode and 20 kept campaign backups instead of 3.
+[*][b]Off in Ironman[/b] campaigns.
+[*][b]Pure Lua, no C#.[/b] Ships no C#, so players get no "this mod wants to run code" prompt (the server needs LuaCs's default, unsandboxed server Lua).
+[/list]
+
+[h2]How to use[/h2]
+[list]
+[*]Open the crew list and click a crew member's row to take control of them.
+[*]There's a 3 second cooldown between switches.
+[*]New players can switch once they have spawned in the campaign for the first time.
+[*]Disconnecting hands your current body back to the AI instead of letting the disconnect timer kill it.
+[/list]
+
+[h2]Admin commands[/h2]
+Type these in chat. They're hidden from public chat (except when CrewSwap is off because of a version mismatch). [b]status[/b] works for everyone; the rest need an admin.
+[list]
+[*][b]!crewswap[/b] or [b]!crewswap status[/b]: is CrewSwap active, pool mode, home protection.
+[*][b]!crewswap pool shared|own[/b]: any free crew member can be taken, or only your own character, crew you own and unclaimed crew.
+[*][b]!crewswap protect on|off[/b]: whether players' own characters can be taken by others.
+[*][b]!crewswap owner "<character>" "<player>"[/b]: give a crew member to a connected player.
+[*][b]!crewswap check[/b]: re-run the integrity check and lift an integrity lockdown if it passes (it can't turn CrewSwap back on after a FAIL).
+[/list]
+
+[h2]Links[/h2]
+[list]
+[*][url=https://mrmcepic.github.io/barotrauma-crewswap/book/]Documentation[/url] (install guide, admin guide, troubleshooting, differences from vanilla, architecture)
+[*][url=https://github.com/MrMcEpic/barotrauma-crewswap]Source code and issue tracker on GitHub[/url]
+[/list]
+
+[h2]Licence and credits[/h2]
+CrewSwap is free software under the [url=https://www.gnu.org/licenses/agpl-3.0.html]GNU AGPL v3.0 only[/url].
+Thanks to evilfactory and the contributors of [url=https://github.com/evilfactory/LuaCsForBarotrauma]LuaCsForBarotrauma[/url], and to oiltanker's Multiplayer Crew Manager for the inspiration (no code was ported). Barotrauma is by FakeFish and Undertow Games, published by Daedalic Entertainment; this is an unofficial fan mod.

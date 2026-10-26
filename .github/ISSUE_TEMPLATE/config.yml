@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://mrmcepic.github.io/barotrauma-crewswap/book/
+    about: Installation, admin commands, troubleshooting and the FAQ.
+  - name: Security report
+    url: https://github.com/MrMcEpic/barotrauma-crewswap/security/advisories/new
+    about: Report a security problem privately instead of opening a public issue.

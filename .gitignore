@@ -1,0 +1,7 @@
+# Build outputs
+dist/
+book/
+_site/
+
+*.tmp
+.DS_Store
