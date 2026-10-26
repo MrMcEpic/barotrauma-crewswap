@@ -85,7 +85,7 @@ jobs:
           echo "Release notes:"
           cat release_notes.md
       - name: Create the GitHub release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           name: CrewSwap ${{ github.ref_name }}
           body_path: release_notes.md
