@@ -10,7 +10,7 @@ character goes down.
 - Website: <https://mrmcepic.github.io/barotrauma-crewswap/>
 - Documentation: <https://mrmcepic.github.io/barotrauma-crewswap/book/>
 - Download: [GitHub Releases](https://github.com/MrMcEpic/barotrauma-crewswap/releases)
-- Steam Workshop (link coming soon)
+- [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3827463751)
 
 > [!WARNING]
 > **CrewSwap 0.9.0 is a beta.** All of the server-side logic is covered by unit tests and passed an

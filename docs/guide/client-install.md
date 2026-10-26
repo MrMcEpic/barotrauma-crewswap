@@ -35,7 +35,7 @@ the session, the request comes from a different mod on that server.
 You don't need to do anything. When you join a server that runs CrewSwap, the game offers to
 download it like any other server mod. Accept the download.
 
-You can also subscribe to CrewSwap on the Steam Workshop if you like. If your copy differs from
+You can also subscribe to CrewSwap on the [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3827463751) if you like. If your copy differs from
 the server's, the game uses the server's version for that session.
 
 ## 3. Check that it's working

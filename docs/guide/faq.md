@@ -9,7 +9,7 @@ telling them how to turn it on. The server needs server-side LuaCs. See
 
 ### Do I have to subscribe to CrewSwap on the Workshop?
 
-No. The server sends CrewSwap to you when you join. Subscribing is optional.
+No. The server sends CrewSwap to you when you join. Subscribing on the [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3827463751) is optional.
 
 ### Will it ask me to enable C#?
 

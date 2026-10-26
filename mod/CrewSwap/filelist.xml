@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<contentpackage name="CrewSwap" modversion="0.9.0" gameversion="1.13.4.0" corepackage="false">
+<contentpackage name="CrewSwap" modversion="0.9.0" gameversion="1.13.4.0" corepackage="false" steamworkshopid="3827463751">
   <Item file="%ModDir%/Content/crewswap_sync.xml"/>
 </contentpackage>
